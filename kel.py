@@ -24,7 +24,7 @@ class Tank:
 tank_tiny = Tank(full_mass = 0.225, empty_mass = 0.025)
 tank_small = Tank(full_mass = 0.5625, empty_mass = 0.0625)
 tank_large = Tank(full_mass = 4.5, empty_mass = 0.5)
-tank_xlarge = Tank(rull_mass = 20.25, empty_mass = 2.25)
+tank_xlarge = Tank(full_mass = 20.25, empty_mass = 2.25)
 
 
 class Rocket:
@@ -268,29 +268,61 @@ rocket_clydesdale   = Rocket(mass=0, name='clydesdale', tank=Tank(full_mass=144,
                              isp_atm=210, isp_vac=235, thrust_atm=2948.936, thrust_vac=3300)
 
 
-if __name__ == '__main__':
-    rockets_start = (rocket_flea,)
-    rockets_basic = rockets_start + (rocket_swivel, rocket_hammer)
-    rockets_general = rockets_basic + (rocket_reliant, rocket_thumper)
-    rockets_advanced = rockets_general + (rocket_terrier,)
-    rockets_heavy = rockets_advanced + (rocket_poodle, rocket_skipper, rocket_kickback)
-    rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
-    rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale)
-        
-    rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite)
+rockets_start = (rocket_flea,)
+rockets_basic = rockets_start + (rocket_swivel, rocket_hammer)
+rockets_general = rockets_basic + (rocket_reliant, rocket_thumper)
+rockets_advanced = rockets_general + (rocket_terrier,)
+rockets_heavy = rockets_advanced + (rocket_poodle, rocket_skipper, rocket_kickback)
+rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
+rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale)
 
-    payload = 3.75
-    g_body  = g_kerbin
-    p_body  = p_kerbin
-    min_twr = 1.15
+rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite)
+
+if __name__ == '__main__':
+    import argparse
     
-    min_dv  = 3400
-    tgt_dv  = min_dv * 1.1
-    max_dv  = min_dv * 1.2
+    parser = argparse.ArgumentParser(
+        description='Kerbel Engine Lift Calculator')
+
+    parser.add_argument('--payload', type=float, metavar='tons', required=True)
+    rocketsel = parser.add_mutually_exclusive_group(required=True)
+    rocketsel.add_argument('--start', dest='rockets', const=rockets_start, action='store_const')
+    rocketsel.add_argument('--basic', dest='rockets', const=rockets_basic, action='store_const')
+    rocketsel.add_argument('--general', dest='rockets', const=rockets_general, action='store_const')
+    rocketsel.add_argument('--advanced', dest='rockets', const=rockets_advanced, action='store_const')
+    rocketsel.add_argument('--heavy', dest='rockets', const=rockets_heavy, action='store_const')
+    rocketsel.add_argument('--heavier', dest='rockets', const=rockets_heavier, action='store_const')
+    rocketsel.add_argument('--very_heavy', dest='rockets', const=rockets_very_heavy, action='store_const')
+    parser.add_argument('--with_prop', action='store_true')
+    bodysel = parser.add_mutually_exclusive_group(required=True)
+    bodysel.add_argument('--kerbin', dest='body', const=g_kerbin, action='store_const')
+    bodysel.add_argument('--mun', dest='body', const=g_mun, action='store_const')
+    bodysel.add_argument('--minmus', dest='body', const=g_minmus, action='store_const')
+    psel = parser.add_mutually_exclusive_group(required=True)
+    psel.add_argument('--vac', dest='press', const=p_space, action='store_const')
+    psel.add_argument('--atm', dest='press', const=p_kerbin, action='store_const')
+    parser.add_argument('--twr', type=float, metavar='value', default=1.15)
+    dvsel = parser.add_mutually_exclusive_group(required=True)
+    dvsel.add_argument('--dvmin', type=float, metavar='m/s', default=None)
+    dvsel.add_argument('--dvtgt', type=float, metavar='m/s', default=None)
+    
+    args = parser.parse_args()
+
+    payload = args.payload
+    g_body  = args.body
+    p_body  = args.press
+    min_twr = args.twr
+    
+    tgt_dv  = args.dvtgt if args.dvmin is None else args.dvmin * 1.1
+    max_dv  = None if tgt_dv == 0 else tgt_dv * 1.1
+
+    rockets = args.rockets
+    if args.with_prop:
+        rockets += rockets_add_prop
     
     for stages in range(1,4):
         print(f"==== Stages: {stages} ====");
-        configurator = multi_configurations(rockets_very_heavy + rockets_add_prop,
+        configurator = multi_configurations(rockets,
                                             stages=stages,
                                             payload=payload,
                                             g_body=g_body,
