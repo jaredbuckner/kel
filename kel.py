@@ -310,6 +310,7 @@ if __name__ == '__main__':
     dvsel.add_argument('--dvmin', type=float, metavar='m/s', default=None)
     dvsel.add_argument('--dvtgt', type=float, metavar='m/s', default=None)
     parser.add_argument('--gimbal', action='store_true')
+    parser.add_argument('--show', type=int, default=None)
     
     args = parser.parse_args()
 
@@ -317,9 +318,10 @@ if __name__ == '__main__':
     g_body  = args.body
     p_body  = args.press
     min_twr = args.twr
+    show    = args.show
     
     tgt_dv  = args.dvtgt if args.dvmin is None else args.dvmin * 1.1
-    max_dv  = None if tgt_dv == 0 else tgt_dv * 1.1
+    max_dv  = None if tgt_dv == 0 else tgt_dv * 2.0
 
     rockets = args.rockets
     if args.with_prop:
@@ -341,7 +343,7 @@ if __name__ == '__main__':
         collector = pareto(configurator, debug=False)
         scol = sorted(collector, key=lambda d: (d[1][2], -d[1][0], -d[1][1], d[0]))
         
-        for stages, totals in scol:
+        for stages, totals in scol if show is None else scol[:show]:
             dv, twr, tmass = totals
             print(f'{tmass:6.2f}T @ {dv:6.1f}dV : {twr:4.1f} TWR')
             print_stages(stages, payload=payload, g_body=g_body, p_body=p_body);
