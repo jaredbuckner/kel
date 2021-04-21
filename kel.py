@@ -31,8 +31,9 @@ class Rocket:
     def __init__(self, *, name, mass,
                  isp_atm, thrust_atm,
                  isp_vac, thrust_vac,
-                 tank):
+                 tank, does_gimbal=True):
         self._name = name
+        self._does_gimbal = does_gimbal
         self._mass = mass
         self._isp_atm = isp_atm
         self._thrust_atm = thrust_atm
@@ -42,7 +43,7 @@ class Rocket:
 
     # Change name and tank type
     def clone(self, *, name, tank):
-        return Rocket(name=name, mass=self._mass, tank=tank,
+        return Rocket(name=name, mass=self._mass, tank=tank, does_gimbal=self._does_gimbal,
                       isp_atm=self._isp_atm, thrust_atm=self._thrust_atm,
                       isp_vac=self._isp_vac, thrust_vac=self._thrust_vac)
     
@@ -55,10 +56,13 @@ class Rocket:
 
     def thrust(self, p_body):
         return self._thrust_atm if p_body else self._thrust_vac
-
+    
     def tank(self):
         return self._tank
-        
+
+    def does_gimbal(self):
+        return self._does_gimbal
+    
     def liftable_mass(self, *, twr=1.15, g_body=g_kerbin, p_body = p_kerbin,
                       tanks=1, m=1):
         if self._tank.is_solid:  tanks = m
@@ -216,7 +220,7 @@ def pareto(items, *, consider_twr = False, debug=False):
 
     
 ##--------
-rocket_ant   = Rocket(mass=0.02, name='ant', tank=tank_tiny,
+rocket_ant   = Rocket(mass=0.02, name='ant', tank=tank_tiny, does_gimbal=False,
                       isp_atm= 80, isp_vac=315, thrust_atm=0.51, thrust_vac=2)
 rocket_spark = Rocket(mass=0.13, name='spark', tank=tank_tiny,
                       isp_atm=265, isp_vac=320, thrust_atm=16.56, thrust_vac=20)
@@ -224,11 +228,11 @@ rocket_spark = Rocket(mass=0.13, name='spark', tank=tank_tiny,
 ##--------
 rocket_terrier = Rocket(mass=0.50, name='terrier', tank=tank_small,
                         isp_atm= 85, isp_vac=345, thrust_atm=14.78, thrust_vac=60)
-rocket_dart    = Rocket(mass=1.00, name='dart', tank=tank_small,
+rocket_dart    = Rocket(mass=1.00, name='dart', tank=tank_small, does_gimbal=False,
                         isp_atm=260, isp_vac=340, thrust_atm=153.53, thrust_vac=180)
 rocket_swivel  = Rocket(mass=1.50, name='swivel', tank=tank_small,
                         isp_atm=250, isp_vac=320,  thrust_atm=167.97, thrust_vac=215)
-rocket_reliant = Rocket(mass=1.25, name='reliant', tank=tank_small,
+rocket_reliant = Rocket(mass=1.25, name='reliant', tank=tank_small, does_gimbal=False,
                         isp_atm=265, isp_vac=310, thrust_atm=205.16, thrust_vac=240)
 rocket_vector  = Rocket(mass=4.00, name='vector', tank=tank_small,
                         isp_atm=295, isp_vac=315, thrust_atm=936.51, thrust_vac=1000)
@@ -247,19 +251,19 @@ rocket_rhino    = Rocket(mass=9.00, name='rhino', tank=tank_xlarge,
 
 ##--------
 rocket_mite    = Rocket(mass=0, name='mite', tank=Tank(full_mass=0.375, empty_mass=0.075, is_solid=True),
-                        isp_atm=185, isp_vac=210, thrust_atm=11.012, thrust_vac=12.5)
+                        does_gimbal=False, isp_atm=185, isp_vac=210, thrust_atm=11.012, thrust_vac=12.5)
 rocket_shrimp  = Rocket(mass=0, name='shrimp', tank=Tank(full_mass=0.875, empty_mass=0.155, is_solid=True),
-                        isp_atm=190, isp_vac=215, thrust_atm=26.512, thrust_vac=30)
+                        does_gimbal=False, isp_atm=190, isp_vac=215, thrust_atm=26.512, thrust_vac=30)
 
 ##--------
 rocket_flea     = Rocket(mass=0, name='flea', tank=Tank(full_mass=1.5, empty_mass=0.45, is_solid=True),
-                         isp_atm=140, isp_vac=165, thrust_atm=162.91, thrust_vac=192)
+                         does_gimbal=False, isp_atm=140, isp_vac=165, thrust_atm=162.91, thrust_vac=192)
 rocket_hammer   = Rocket(mass=0, name='hammer', tank=Tank(full_mass=3.56, empty_mass=0.75, is_solid=True),
-                         isp_atm=170, isp_vac=195, thrust_atm=197.9, thrust_vac=227)
+                         does_gimbal=False, isp_atm=170, isp_vac=195, thrust_atm=197.9, thrust_vac=227)
 rocket_thumper  = Rocket(mass=0, name='thumper', tank=Tank(full_mass=7.65, empty_mass=1.5, is_solid=True),
-                         isp_atm=175, isp_vac=210, thrust_atm=250, thrust_vac=300)
+                         does_gimbal=False, isp_atm=175, isp_vac=210, thrust_atm=250, thrust_vac=300)
 rocket_kickback = Rocket(mass=0, name='kickback', tank=Tank(full_mass=24, empty_mass=4.5, is_solid=True),
-                         isp_atm=195, isp_vac=220, thrust_atm=593.86, thrust_vac=670)
+                         does_gimbal=False, isp_atm=195, isp_vac=220, thrust_atm=593.86, thrust_vac=670)
 
 ##--------
 rocket_thoroughbred = Rocket(mass=0, name='thoroughbred', tank=Tank(full_mass=70, empty_mass=10, is_solid=True),
@@ -276,7 +280,7 @@ rockets_heavy = rockets_advanced + (rocket_poodle, rocket_skipper, rocket_kickba
 rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
 rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale)
 
-rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite)
+rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite, rocket_shrimp)
 
 if __name__ == '__main__':
     import argparse
@@ -305,6 +309,7 @@ if __name__ == '__main__':
     dvsel = parser.add_mutually_exclusive_group(required=True)
     dvsel.add_argument('--dvmin', type=float, metavar='m/s', default=None)
     dvsel.add_argument('--dvtgt', type=float, metavar='m/s', default=None)
+    parser.add_argument('--gimbal', action='store_true')
     
     args = parser.parse_args()
 
@@ -319,6 +324,9 @@ if __name__ == '__main__':
     rockets = args.rockets
     if args.with_prop:
         rockets += rockets_add_prop
+
+    if args.gimbal:
+        rockets = tuple(r for r in rockets if r.does_gimbal())
     
     for stages in range(1,4):
         print(f"==== Stages: {stages} ====");
