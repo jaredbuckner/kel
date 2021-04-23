@@ -31,9 +31,10 @@ class Rocket:
     def __init__(self, *, name, mass,
                  isp_atm, thrust_atm,
                  isp_vac, thrust_vac,
-                 tank, does_gimbal=True):
+                 tank, does_gimbal=True, is_radial=False):
         self._name = name
         self._does_gimbal = does_gimbal
+        self._is_radial = is_radial
         self._mass = mass
         self._isp_atm = isp_atm
         self._thrust_atm = thrust_atm
@@ -43,7 +44,8 @@ class Rocket:
 
     # Change name and tank type
     def clone(self, *, name, tank):
-        return Rocket(name=name, mass=self._mass, tank=tank, does_gimbal=self._does_gimbal,
+        return Rocket(name=name, mass=self._mass, tank=tank,
+                      does_gimbal=self._does_gimbal, is_radial=self._is_radial,
                       isp_atm=self._isp_atm, thrust_atm=self._thrust_atm,
                       isp_vac=self._isp_vac, thrust_vac=self._thrust_vac)
     
@@ -62,6 +64,9 @@ class Rocket:
 
     def does_gimbal(self):
         return self._does_gimbal
+
+    def is_radial(self):
+        return self._is_radial
     
     def liftable_mass(self, *, twr=1.15, g_body=g_kerbin, p_body = p_kerbin,
                       tanks=1, m=1):
@@ -117,7 +122,7 @@ class Rocket:
 def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_kerbin,
                          max_tanks = 999, max_engines=9, min_dv=0, min_twr=0, max_dv=None):
     for rocket in rocket_choices:
-        for m in range(1, max_engines+1):
+        for m in range(2 if rocket.is_radial() else 1, max_engines+1):
             for tanks in (m,) if rocket.tank().is_solid else range(1,max_tanks+1):
                 dv, twr, tmass = rocket.vtm(payload=payload, g_body=g_body, p_body=p_body,
                                             tanks=tanks, m=m)
@@ -228,6 +233,8 @@ rocket_spark = Rocket(mass=0.13, name='spark', tank=tank_tiny,
 ##--------
 rocket_terrier = Rocket(mass=0.50, name='terrier', tank=tank_small,
                         isp_atm= 85, isp_vac=345, thrust_atm=14.78, thrust_vac=60)
+rocket_thud    = Rocket(mass=0.90, name='thud', tank=tank_small, is_radial=True,
+                        isp_atm=275, isp_vac=305, thrust_atm=108.197, thrust_vac=120);
 rocket_dart    = Rocket(mass=1.00, name='dart', tank=tank_small, does_gimbal=False,
                         isp_atm=260, isp_vac=340, thrust_atm=153.53, thrust_vac=180)
 rocket_swivel  = Rocket(mass=1.50, name='swivel', tank=tank_small,
@@ -275,7 +282,7 @@ rocket_clydesdale   = Rocket(mass=0, name='clydesdale', tank=Tank(full_mass=144,
 rockets_start = (rocket_flea,)
 rockets_basic = rockets_start + (rocket_swivel, rocket_hammer)
 rockets_general = rockets_basic + (rocket_reliant, rocket_thumper)
-rockets_advanced = rockets_general + (rocket_terrier,)
+rockets_advanced = rockets_general + (rocket_terrier, rocket_thud)
 rockets_heavy = rockets_advanced + (rocket_poodle, rocket_skipper, rocket_kickback)
 rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
 rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale)
