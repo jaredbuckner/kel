@@ -122,7 +122,8 @@ class Rocket:
 def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_kerbin,
                          max_tanks = 999, max_engines=9, min_dv=0, min_twr=0, max_dv=None):
     for rocket in rocket_choices:
-        for m in range(2 if rocket.is_radial() else 1, max_engines+1):
+        me = 8 if rocket.is_radial() and max_engines > 8 else max_engines
+        for m in range(2 if rocket.is_radial() else 1, me+1):
             for tanks in (m,) if rocket.tank().is_solid else range(1,max_tanks+1):
                 dv, twr, tmass = rocket.vtm(payload=payload, g_body=g_body, p_body=p_body,
                                             tanks=tanks, m=m)
@@ -263,6 +264,11 @@ rocket_mammoth  = Rocket(mass=15, name='mammoth', tank=tank_xlarge,
                          isp_atm=295, isp_vac=315, thrust_atm=3746.03, thrust_vac=4000)
 
 ##--------
+rocket_sepratron = Rocket(mass=0, name='sepratron', tank=Tank(full_mass=0.07, empty_mass=0.01, is_solid=True),
+                          does_gimbal=False, is_radial=True,
+                          isp_atm=118, isp_vac=154, thrust_atm=13.79, thrust_vac=18)
+
+##--------
 rocket_mite    = Rocket(mass=0, name='mite', tank=Tank(full_mass=0.375, empty_mass=0.075, is_solid=True),
                         does_gimbal=False, isp_atm=185, isp_vac=210, thrust_atm=11.012, thrust_vac=12.5)
 rocket_shrimp  = Rocket(mass=0, name='shrimp', tank=Tank(full_mass=0.875, empty_mass=0.155, is_solid=True),
@@ -303,7 +309,7 @@ rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
 rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale, rocket_mammoth)
 
 rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite, rocket_shrimp)
-rockets_add_prec = (rocket_twitch, rocket_spider)
+rockets_add_prec = (rocket_sepratron, rocket_twitch, rocket_spider)
 rockets_add_nerv = (rocket_nerv,)
 rockets_add_dart = (rocket_dart,)
 rockets_add_dawn = (rocket_dawn,)
@@ -370,8 +376,9 @@ if __name__ == '__main__':
     
     if args.gimbal:
         rockets = tuple(r for r in rockets if r.does_gimbal())
-    
-    for stages in range(1,4):
+
+    best_prev = None
+    for stages in range(1,6):
         print(f"==== Stages: {stages} ====");
         configurator = multi_configurations(rockets,
                                             stages=stages,
@@ -383,10 +390,17 @@ if __name__ == '__main__':
                                             max_dv=max_dv);
         collector = pareto(configurator, debug=False)
         scol = sorted(collector, key=lambda d: (d[1][2], -d[1][0], -d[1][1], d[0]))
-        
+
+        best = None
         for stages, totals in scol if show is None else scol[:show]:
             dv, twr, tmass = totals
+            if best is None or tmass < best:
+                best = tmass
             print(f'{tmass:6.2f}T @ {dv:6.1f}dV : {twr:4.1f} TWR')
             print_stages(stages, payload=payload, g_body=g_body, p_body=p_body);
-            
-        print("");
+
+        if best is not None and (best_prev is None or best < best_prev):            
+            print("");
+            best_prev = best
+        elif best is not None:
+            break
