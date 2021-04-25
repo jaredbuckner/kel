@@ -225,10 +225,14 @@ def pareto(items, *, consider_twr = False, debug=False):
 
     
 ##--------
-rocket_ant   = Rocket(mass=0.02, name='ant', tank=tank_tiny, does_gimbal=False,
-                      isp_atm= 80, isp_vac=315, thrust_atm=0.51, thrust_vac=2)
-rocket_spark = Rocket(mass=0.13, name='spark', tank=tank_tiny,
-                      isp_atm=265, isp_vac=320, thrust_atm=16.56, thrust_vac=20)
+rocket_ant    = Rocket(mass=0.02, name='ant', tank=tank_tiny, does_gimbal=False,
+                       isp_atm= 80, isp_vac=315, thrust_atm=0.51, thrust_vac=2)
+rocket_spider = Rocket(mass=0.02, name='spider', tank=tank_tiny, is_radial=True,
+                       isp_atm=260, isp_vac=290, thrust_atm=1.79, thrust_vac=2)
+rocket_twitch = Rocket(mass=0.08, name='twitch', tank=tank_tiny, is_radial=True,
+                       isp_atm=275, isp_vac=290, thrust_atm=15.17, thrust_vac=16.00)
+rocket_spark  = Rocket(mass=0.13, name='spark', tank=tank_tiny,
+                       isp_atm=265, isp_vac=320, thrust_atm=16.56, thrust_vac=20)
 
 ##--------
 rocket_terrier = Rocket(mass=0.50, name='terrier', tank=tank_small,
@@ -255,6 +259,8 @@ rocket_mainsail = Rocket(mass=6.00, name='mainsail', tank=tank_large,
 ##--------
 rocket_rhino    = Rocket(mass=9.00, name='rhino', tank=tank_xlarge,
                          isp_atm=205, isp_vac=340, thrust_atm=1205.88, thrust_vac=2000)
+rocket_mammoth  = Rocket(mass=15, name='mammoth', tank=tank_xlarge,
+                         isp_atm=295, isp_vac=315, thrust_atm=3746.03, thrust_vac=4000)
 
 ##--------
 rocket_mite    = Rocket(mass=0, name='mite', tank=Tank(full_mass=0.375, empty_mass=0.075, is_solid=True),
@@ -278,6 +284,15 @@ rocket_thoroughbred = Rocket(mass=0, name='thoroughbred', tank=Tank(full_mass=70
 rocket_clydesdale   = Rocket(mass=0, name='clydesdale', tank=Tank(full_mass=144, empty_mass=21, is_solid=True),
                              isp_atm=210, isp_vac=235, thrust_atm=2948.936, thrust_vac=3300)
 
+##--------
+rocket_nerv = Rocket(mass=3, name='nerv', tank=tank_small, does_gimbal=False,
+                     isp_atm=185, isp_vac=800, thrust_atm=13.88, thrust_vac=60)
+
+##--------
+rocket_dawn = Rocket(mass=0.25, name='dawn', tank=Tank(full_mass=0.10, empty_mass=0.02), does_gimbal=False,
+                     isp_atm=100, isp_vac=4200, thrust_atm=0.05, thrust_vac=2)
+                     
+
 
 rockets_start = (rocket_flea,)
 rockets_basic = rockets_start + (rocket_swivel, rocket_hammer)
@@ -285,9 +300,13 @@ rockets_general = rockets_basic + (rocket_reliant, rocket_thumper)
 rockets_advanced = rockets_general + (rocket_terrier, rocket_thud)
 rockets_heavy = rockets_advanced + (rocket_poodle, rocket_skipper, rocket_kickback)
 rockets_heavier = rockets_heavy + (rocket_mainsail, rocket_thoroughbred)
-rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale)
+rockets_very_heavy = rockets_heavier + (rocket_vector, rocket_rhino, rocket_clydesdale, rocket_mammoth)
 
 rockets_add_prop = (rocket_spark, rocket_ant, rocket_mite, rocket_shrimp)
+rockets_add_prec = (rocket_twitch, rocket_spider)
+rockets_add_nerv = (rocket_nerv,)
+rockets_add_dart = (rocket_dart,)
+rockets_add_dawn = (rocket_dawn,)
 
 if __name__ == '__main__':
     import argparse
@@ -305,6 +324,10 @@ if __name__ == '__main__':
     rocketsel.add_argument('--heavier', dest='rockets', const=rockets_heavier, action='store_const')
     rocketsel.add_argument('--very_heavy', dest='rockets', const=rockets_very_heavy, action='store_const')
     parser.add_argument('--with_prop', action='store_true')
+    parser.add_argument('--with_prec', action='store_true')
+    parser.add_argument('--with_nerv', action='store_true')
+    parser.add_argument('--with_dart', action='store_true')
+    parser.add_argument('--with_dawn', action='store_true')
     bodysel = parser.add_mutually_exclusive_group(required=True)
     bodysel.add_argument('--kerbin', dest='body', const=g_kerbin, action='store_const')
     bodysel.add_argument('--mun', dest='body', const=g_mun, action='store_const')
@@ -336,7 +359,15 @@ if __name__ == '__main__':
     rockets = args.rockets
     if args.with_prop:
         rockets += rockets_add_prop
-
+    if args.with_prec:
+        rockets += rockets_add_prec
+    if args.with_nerv:
+        rockets += rockets_add_nerv
+    if args.with_dart:
+        rockets += rockets_add_dart
+    if args.with_dawn:
+        rockets += rockets_add_dawn
+    
     if args.gimbal:
         rockets = tuple(r for r in rockets if r.does_gimbal())
     
