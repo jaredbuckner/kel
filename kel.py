@@ -316,6 +316,7 @@ if __name__ == '__main__':
     dvsel = parser.add_mutually_exclusive_group(required=True)
     dvsel.add_argument('--dvmin', type=float, metavar='m/s', default=None)
     dvsel.add_argument('--dvtgt', type=float, metavar='m/s', default=None)
+    parser.add_argument('--dvmax', type=float, metavar='m/s', default=None)
     parser.add_argument('--gimbal', action='store_true')
     parser.add_argument('--show', type=int, default=None)
     
@@ -328,7 +329,9 @@ if __name__ == '__main__':
     show    = args.show
     
     tgt_dv  = args.dvtgt if args.dvmin is None else args.dvmin * 1.1
-    max_dv  = None if tgt_dv == 0 else tgt_dv * 2.0
+    max_dv  = (args.dvmax if args.dvmax is not None else
+               None if tgt_dv == 0 else
+               tgt_dv * 2.0)
 
     rockets = args.rockets
     if args.with_prop:
