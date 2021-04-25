@@ -120,7 +120,8 @@ class Rocket:
     
 
 def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_kerbin,
-                         max_tanks = 999, max_engines=9, min_dv=0, min_twr=0, max_dv=None):
+                         max_tanks = 999, max_engines=9, min_dv=0, min_twr=0,
+                         max_dv=None, max_mass=None):
     for rocket in rocket_choices:
         me = 8 if rocket.is_radial() and max_engines > 8 else max_engines
         for m in range(2 if rocket.is_radial() else 1, me+1):
@@ -131,6 +132,8 @@ def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_k
                     break
                 if max_dv is not None and dv > max_dv:
                     break
+                if max_mass is not None and tmass > max_mass:
+                    break
                 
                 if dv >= min_dv:
                     yield((rocket, m, tanks), (dv, twr, tmass))
@@ -138,7 +141,8 @@ def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_k
 
 def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0,
                          g_body=g_kerbin, p_body=p_kerbin,
-                         max_tanks = 999, max_engines=9, max_dv=None):
+                         max_tanks = 999, max_engines=9,
+                         max_dv=None, max_mass=None):
     for ident_a, data_a in pareto(stage_configurations(rocket_choices,
                                                        payload = payload,
                                                        min_dv = min_dv if stages==1 else 0,
@@ -147,7 +151,8 @@ def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0
                                                        p_body=p_body,
                                                        max_tanks=max_tanks,
                                                        max_engines=max_engines,
-                                                       max_dv = max_dv)):
+                                                       max_dv = max_dv,
+                                                       max_mass = max_mass)):
         if stages == 1:
             yield ((ident_a, ), data_a)
             continue
@@ -155,6 +160,7 @@ def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0
         dv_a, twr_a, tmass_a = data_a
         stage_min_dv = 0 if dv_a > min_dv else min_dv - dv_a
         stage_max_dv = None if max_dv is None else max_dv - dv_a
+        stage_max_mass = None if max_mass is None else max_mass - tmass_a
         stage_payload = tmass_a
         for ident_b, data_b in pareto(multi_configurations(rocket_choices,
                                                            payload = stage_payload,
@@ -165,7 +171,8 @@ def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0
                                                            p_body=p_body,
                                                            max_tanks=max_tanks,
                                                            max_engines=max_engines,
-                                                           max_dv = stage_max_dv)):
+                                                           max_dv = stage_max_dv,
+                                                           max_mass = stage_max_mass)):
             dv_b, twr_b, tmass_b = data_b
             ident = (ident_a, ) + ident_b
             dv = dv_a + dv_b
