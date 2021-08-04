@@ -355,6 +355,7 @@ if __name__ == '__main__':
     parser.add_argument('--dvmax', type=float, metavar='m/s', default=None)
     parser.add_argument('--gimbal', action='store_true')
     parser.add_argument('--show', type=int, default=None)
+    parser.add_argument('--stagesmax', type=int, default=5)
     
     args = parser.parse_args()
 
@@ -385,7 +386,7 @@ if __name__ == '__main__':
         rockets = tuple(r for r in rockets if r.does_gimbal())
 
     best_prev = None
-    for stages in range(1,6):
+    for stages in range(1,args.stagesmax + 1):
         print(f"==== Stages: {stages} ====");
         configurator = multi_configurations(rockets,
                                             stages=stages,
