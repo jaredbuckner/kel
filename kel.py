@@ -4,14 +4,27 @@ import math
 import sys
 
 ## Surface gravity
+g_eve    = 16.7
+g_gilly  = 0.049
+
 g_kerbin = 9.81
 g_mun    = 1.63
 g_minmus = 0.491
 
-## Surface pressure
-p_kerbin = 101.325
+g_duna   = 2.94
+g_ike    = 1.10
+
+## Surface pressure (in atm)
+p_eve    = 5.0
+p_gilly  = 0
+
+p_kerbin = 1.0
 p_mun    = 0
 p_minmus = 0
+
+p_duna   = 0.066667
+p_ike    = 0
+
 p_space  = 0
 
 class Tank:
@@ -54,10 +67,10 @@ class Rocket:
         return self._name
 
     def isp(self, p_body):
-        return self._isp_atm if p_body else self._isp_vac
+        return max(0.0, self._isp_vac + (self._isp_atm - self._isp_vac) * p_body)
 
     def thrust(self, p_body):
-        return self._thrust_atm if p_body else self._thrust_vac
+        return max(0.0, self._thrust_vac + (self._thrust_atm - self._thrust_vac) * p_body)
     
     def tank(self):
         return self._tank
@@ -342,12 +355,18 @@ if __name__ == '__main__':
     parser.add_argument('--with_dart', action='store_true')
     parser.add_argument('--with_dawn', action='store_true')
     bodysel = parser.add_mutually_exclusive_group(required=True)
+    bodysel.add_argument('--eve', dest='body', const=g_eve, action='store_const')
+    bodysel.add_argument('--gilly', dest='body', const=g_gilly, action='store_const')
     bodysel.add_argument('--kerbin', dest='body', const=g_kerbin, action='store_const')
     bodysel.add_argument('--mun', dest='body', const=g_mun, action='store_const')
     bodysel.add_argument('--minmus', dest='body', const=g_minmus, action='store_const')
+    bodysel.add_argument('--duna', dest='body', const=g_duna, action='store_const')
+    bodysel.add_argument('--ike', dest='body', const=g_ike, action='store_const')
     psel = parser.add_mutually_exclusive_group(required=True)
     psel.add_argument('--vac', dest='press', const=p_space, action='store_const')
     psel.add_argument('--atm', dest='press', const=p_kerbin, action='store_const')
+    psel.add_argument('--atm_eve', dest='press', const=p_eve, action='store_const')
+    psel.add_argument('--atm_duna', dest='press', const=p_duna, action='store_const')
     parser.add_argument('--twr', type=float, metavar='value', default=1.15)
     dvsel = parser.add_mutually_exclusive_group(required=True)
     dvsel.add_argument('--dvmin', type=float, metavar='m/s', default=None)
