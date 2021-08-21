@@ -203,7 +203,17 @@ def print_stages(stage_iter, *, payload, g_body=g_kerbin, p_body=p_kerbin):
         payload = tmass
     
 
-def pareto(items, *, consider_twr = False, debug=False):
+def pareto(items):
+    # Capture and sort values by dv, then tmass
+    values = sorted(items, key=lambda x:(-x[1][0], x[1][2]))
+    last = None
+    for value in values:
+        if not last or value[1][2] < last[1][2]:
+            yield value
+            last = value        
+    
+
+def pareto2(items, *, consider_twr = False, debug=False):
     values = list()
 
     for ident, data in items:
@@ -416,7 +426,7 @@ if __name__ == '__main__':
                                             min_dv=tgt_dv,
                                             min_twr=min_twr,
                                             max_dv=max_dv);
-        collector = pareto(configurator, debug=False)
+        collector = pareto(configurator)
         scol = sorted(collector, key=lambda d: (d[1][2], -d[1][0], -d[1][1], d[0]))
 
         best = None
