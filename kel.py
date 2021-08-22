@@ -386,6 +386,7 @@ if __name__ == '__main__':
     parser.add_argument('--show', type=int, default=None)
     parser.add_argument('--stagesmin', type=int, default=1)
     parser.add_argument('--stagesmax', type=int, default=5)
+    parser.add_argument('--enginesmax', type=int, default=9)
     
     args = parser.parse_args()
 
@@ -394,6 +395,7 @@ if __name__ == '__main__':
     p_body  = args.press
     min_twr = args.twr
     show    = args.show
+    max_engines = args.enginesmax
     
     tgt_dv  = args.dvtgt if args.dvmin is None else args.dvmin * 1.1
     max_dv  = (args.dvmax if args.dvmax is not None else
@@ -425,7 +427,8 @@ if __name__ == '__main__':
                                             p_body = p_body,
                                             min_dv=tgt_dv,
                                             min_twr=min_twr,
-                                            max_dv=max_dv);
+                                            max_dv=max_dv,
+                                            max_engines=max_engines);
         collector = pareto(configurator)
         scol = sorted(collector, key=lambda d: (d[1][2], -d[1][0], -d[1][1], d[0]))
 
