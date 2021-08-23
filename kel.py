@@ -34,10 +34,11 @@ class Tank:
         self.is_solid = is_solid
 
 
-tank_tiny = Tank(full_mass = 0.225, empty_mass = 0.025)
-tank_small = Tank(full_mass = 0.5625, empty_mass = 0.0625)
-tank_large = Tank(full_mass = 4.5, empty_mass = 0.5)
-tank_xlarge = Tank(full_mass = 20.25, empty_mass = 2.25)
+tank_unit = Tank(full_mass = 0.005625, empty_mass = 0.000625)  # 1 units of fuel mixture
+tank_tiny = Tank(full_mass = 0.225, empty_mass = 0.025)    # Oscar, 40 units
+tank_small = Tank(full_mass = 0.5625, empty_mass = 0.0625) # FL-T100, 100 units
+tank_large = Tank(full_mass = 4.5, empty_mass = 0.5)       # X200-8, 800 units
+tank_xlarge = Tank(full_mass = 20.25, empty_mass = 2.25)   # S3-3600, 3600 units
 
 
 class Rocket:
@@ -65,6 +66,9 @@ class Rocket:
     
     def name(self):
         return self._name
+
+    def mass(self):
+        return self._mass
 
     def isp(self, p_body):
         return max(0.0, self._isp_vac + (self._isp_atm - self._isp_vac) * p_body)
@@ -133,12 +137,12 @@ class Rocket:
     
 
 def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_kerbin,
-                         max_tanks = 999, max_engines=9, min_dv=0, min_twr=0,
+                         tankcountseq=range(1,1000), max_engines=9, min_dv=0, min_twr=0,
                          max_dv=None, max_mass=None):
     for rocket in rocket_choices:
         me = 8 if rocket.is_radial() and max_engines > 8 else max_engines
         for m in range(2 if rocket.is_radial() else 1, me+1):
-            for tanks in (m,) if rocket.tank().is_solid else range(1,max_tanks+1):
+            for tanks in (m,) if rocket.tank().is_solid else tankcountseq:
                 dv, twr, tmass = rocket.vtm(payload=payload, g_body=g_body, p_body=p_body,
                                             tanks=tanks, m=m)
                 if twr < min_twr:
@@ -154,7 +158,7 @@ def stage_configurations(rocket_choices, *, payload, g_body=g_kerbin, p_body=p_k
 
 def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0,
                          g_body=g_kerbin, p_body=p_kerbin,
-                         max_tanks = 999, max_engines=9,
+                         tankcountseq=range(1,1000), max_engines=9,
                          max_dv=None, max_mass=None):
     for ident_a, data_a in pareto(stage_configurations(rocket_choices,
                                                        payload = payload,
@@ -162,7 +166,7 @@ def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0
                                                        min_twr = min_twr,
                                                        g_body=g_body,
                                                        p_body=p_body,
-                                                       max_tanks=max_tanks,
+                                                       tankcountseq=tankcountseq,
                                                        max_engines=max_engines,
                                                        max_dv = max_dv,
                                                        max_mass = max_mass)):
@@ -182,7 +186,7 @@ def multi_configurations(rocket_choices, *, payload, stages, min_dv=0, min_twr=0
                                                            min_twr = min_twr,
                                                            g_body=g_body,
                                                            p_body=p_body,
-                                                           max_tanks=max_tanks,
+                                                           tankcountseq=tankcountseq,
                                                            max_engines=max_engines,
                                                            max_dv = stage_max_dv,
                                                            max_mass = stage_max_mass)):
@@ -387,6 +391,7 @@ if __name__ == '__main__':
     parser.add_argument('--stagesmin', type=int, default=1)
     parser.add_argument('--stagesmax', type=int, default=5)
     parser.add_argument('--enginesmax', type=int, default=9)
+    parser.add_argument('--usetankunits', action='store_true')
     
     args = parser.parse_args()
 
@@ -401,7 +406,7 @@ if __name__ == '__main__':
     max_dv  = (args.dvmax if args.dvmax is not None else
                None if tgt_dv == 0 else
                tgt_dv * 2.0)
-
+    
     rockets = args.rockets
     if args.with_prop:
         rockets += rockets_add_prop
@@ -417,6 +422,13 @@ if __name__ == '__main__':
     if args.gimbal:
         rockets = tuple(r for r in rockets if r.does_gimbal())
 
+    if args.usetankunits:
+        rockets = tuple(r if r.mass() == 0 else r.clone(name=r.name(), tank=tank_unit) for r in rockets)
+
+    tankcountseq = tuple((x for x in range(20, 1440001, +20)
+                          if x not in (20, 60)) if args.usetankunits
+                         else range(1, 1000))
+    
     best_prev = None
     for stages in range(args.stagesmin,args.stagesmax + 1):
         print(f"==== Stages: {stages} ====");
@@ -428,6 +440,7 @@ if __name__ == '__main__':
                                             min_dv=tgt_dv,
                                             min_twr=min_twr,
                                             max_dv=max_dv,
+                                            tankcountseq = tankcountseq,
                                             max_engines=max_engines);
         collector = pareto(configurator)
         scol = sorted(collector, key=lambda d: (d[1][2], -d[1][0], -d[1][1], d[0]))
